@@ -1,6 +1,10 @@
 package easyjson
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"errors"
+	"strings"
+)
 
 type EasyJSON struct {
 	JSONMap map[string]interface{}
@@ -33,6 +37,23 @@ func (e *EasyJSON) GetInt(key string) int {
 
 func (e *EasyJSON) GetFloat64(key string) float64 {
 	return e.JSONMap[key].(float64)
+}
+
+func (e *EasyJSON) ChainCall(chain string) (interface{}, error) {
+	return e.chain(e.JSONMap, chain)
+}
+
+func (e *EasyJSON) chain(data map[string]interface{}, key string) (interface{}, error) {
+	keys := strings.Split(key, ".")
+	if len(keys) == 1 {
+		return data[key], nil
+	}
+	last := key[strings.Index(key, ".") + 1:]
+	val, ok := data[keys[0]].(map[string]interface{})
+	if !ok {
+		return nil, errors.New("can't convert map object")
+	}
+	return e.chain(val, last)
 }
 
 func ParseJSON(jsonData []byte) *EasyJSON {
